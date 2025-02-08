@@ -20,6 +20,10 @@ RED = (255, 0, 0)
  
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 500
+
+NUMBER_OF_BLOCKS_COL = 11
+NUMBER_OF_BLOCKS_ROW = 5
+SPACE_BETWEEN_BLOCKS = 20
  
 # --- Classes ---
  
@@ -42,7 +46,7 @@ class Block(pygame.sprite.Sprite):
  
     def update(self):
         """ Automatically called when we need to move the block. """
-        self.rect.y += 1
+        #self.rect.y += 1
  
         if self.rect.y > SCREEN_HEIGHT + self.rect.height:
             self.reset_pos()
@@ -55,7 +59,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface([20, 20])
         self.image.fill(RED)
         self.rect = self.image.get_rect()
-        self.rect.y = 480
+        self.rect.y = SCREEN_HEIGHT-self.rect.h
  
     def update(self):
         """ Update the player location. """
@@ -79,6 +83,13 @@ class Bullet(pygame.sprite.Sprite):
         """ Move the bullet. """
         self.rect.y -= 3
 
+class InvaderBullet(Bullet):
+    """ This class represents the bullets from the invaders and it is a sub-class of Bullet"""
+    def __init__(self):
+        super().__init__()
+    def update(self):
+        self.rect.y += 3
+
  
 class Game(object):
     """ This class represents an instance of the game. If we need to
@@ -95,14 +106,16 @@ class Game(object):
         # Create sprite lists
         self.block_list = pygame.sprite.Group()
         self.bullet_list = pygame.sprite.Group()
+        self.invaderbullet_list = pygame.sprite.Group()
         self.all_sprites_list = pygame.sprite.Group()
  
         # Create the block sprites
-        for i in range(50):
+        for i in range(NUMBER_OF_BLOCKS_COL):
             block = Block()
  
-            block.rect.x = random.randrange(SCREEN_WIDTH)
-            block.rect.y = random.randrange(-300, SCREEN_HEIGHT)
+            #block.rect.x = random.randrange(SCREEN_WIDTH)
+            block.rect.x =(SCREEN_WIDTH/2)-(NUMBER_OF_BLOCKS_COL*block.rect.w/2 + NUMBER_OF_BLOCKS_COL/2*SPACE_BETWEEN_BLOCKS) + i *(block.rect.w + SPACE_BETWEEN_BLOCKS)
+            block.rect.y = 10
  
             self.block_list.add(block)
             self.all_sprites_list.add(block)
@@ -167,6 +180,41 @@ class Game(object):
  
             if len(self.block_list) == 0:
                 self.game_over = True
+
+            #One random invader shoots a bullet if a random number > 7
+            if random.randrange(100)>50:
+                invaderbullet=InvaderBullet()
+                randomblockindex = random.randrange(0, len(self.block_list))
+                randomblock:Block=None
+                i=0
+                for block in self.block_list:
+                    i += 1
+                    if i > randomblockindex:
+                        randomblock=block
+                        break
+                invaderbullet.rect.x=randomblock.rect.x+int(randomblock.rect.w/2)
+                invaderbullet.rect.y=randomblock.rect.y+randomblock.rect.h
+                self.all_sprites_list.add(invaderbullet)
+                self.invaderbullet_list.add(invaderbullet)
+
+            
+            for invaderbullet in self.invaderbullet_list:
+                #Checks if any invader bullets hit the player
+                #block_hit_list = pygame.sprite.spritecollide(bullet, self.block_list, True)
+                
+                #if hit the player, gameover
+
+                #Remove the invader bullet if it flies down off the screen
+                if invaderbullet.rect.y > SCREEN_HEIGHT:
+                    self.invaderbullet_list.remove(invaderbullet)
+                    self.all_sprites_list.remove(invaderbullet)
+
+            invaderbullet_hit_list = pygame.sprite.spritecollide(self.player, self.invaderbullet_list, False)
+            if len(invaderbullet_hit_list) > 0:
+                self.game_over = True
+
+
+                
  
     def display_frame(self, screen):
         """ Display everything to the screen for the game. """
