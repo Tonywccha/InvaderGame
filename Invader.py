@@ -82,6 +82,15 @@ class Bullet(pygame.sprite.Sprite):
         """ Move the bullet. """
         self.rect.y -= 3
 
+class InvaderBullet(Bullet):
+    """ This class represents the bullets from the invaders and it is a sub-class of Bullet"""
+    def __init__(self):
+        super().__init__()
+        self.image.fill(RED)
+    def update(self):
+        self.rect.y += 3
+
+
 
 class Game(object):
     """ This class represents an instance of the game. If we need to
@@ -94,10 +103,12 @@ class Game(object):
 
         self.score = 0
         self.game_over = False
+        self.game_over_msg ='Game Over!'
 
         # Create sprite lists
         self.block_list = pygame.sprite.Group()
         self.bullet_list = pygame.sprite.Group()
+        self.invaderbullet_list = pygame.sprite.Group()
         self.all_sprites_list = pygame.sprite.Group()
 
         # Create the block sprites`
@@ -173,6 +184,41 @@ class Game(object):
 
             if len(self.block_list) == 0:
                 self.game_over = True
+                self.game_over_msg = 'Wow! You won!'
+            else:
+                #One random invader shoots a bullet if a random number > 7
+                if random.randrange(100)>50:
+                    invaderbullet=InvaderBullet()
+                    randomblockindex = random.randrange(0, len(self.block_list))
+                    randomblock:Block=None
+                    i=0
+                    for block in self.block_list:
+                        i += 1
+                        if i > randomblockindex:
+                            randomblock=block
+                            break
+                    invaderbullet.rect.x=randomblock.rect.x+int(randomblock.rect.w/2)
+                    invaderbullet.rect.y=randomblock.rect.y+randomblock.rect.h
+                    self.all_sprites_list.add(invaderbullet)
+                    self.invaderbullet_list.add(invaderbullet)
+
+                
+                for invaderbullet in self.invaderbullet_list:
+                    #Checks if any invader bullets hit the player
+                    #block_hit_list = pygame.sprite.spritecollide(bullet, self.block_list, True)
+                    
+                    #if hit the player, gameover
+
+                    #Remove the invader bullet if it flies down off the screen
+                    if invaderbullet.rect.y > SCREEN_HEIGHT:
+                        self.invaderbullet_list.remove(invaderbullet)
+                        self.all_sprites_list.remove(invaderbullet)
+
+                invaderbullet_hit_list = pygame.sprite.spritecollide(self.player, self.invaderbullet_list, False)
+                if len(invaderbullet_hit_list) > 0:
+                    self.game_over = True
+
+
 
     def display_frame(self, screen):
         """ Display everything to the screen for the game. """
@@ -181,7 +227,7 @@ class Game(object):
         if self.game_over:
             # font = pygame.font.Font("Serif", 25)
             font = pygame.font.SysFont("serif", 25)
-            text = font.render("Game Over, click to restart", True, WHITE)
+            text = font.render(self.game_over_msg+" Click to restart", True, WHITE)
             center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
             center_y = (SCREEN_HEIGHT // 2) - (text.get_height() // 2)
             screen.blit(text, [center_x, center_y])
