@@ -8,15 +8,16 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 
-SCREEN_WIDTH = 1200
-SCREEN_HEIGHT = 700
+SCREEN_WIDTH = 1440
+SCREEN_HEIGHT = 780
+
 
 NUMBER_OF_BLOCKS_COL = 11
 NUMBER_OF_BLOCKS_ROW = 5
 SPACE_BETWEEN_BLOCKS = 15
 
 INVADERBULLETCHANCE = 5
-HIT_DELAY=0.1
+HIT_DELAY=0.05
 
 global VX
 global VXX
@@ -302,10 +303,11 @@ def main():
     pygame.init()
 
     size = [SCREEN_WIDTH, SCREEN_HEIGHT]
-    screen = pygame.display.set_mode(size)
+    screen = pygame.display.set_mode(size, pygame.RESIZABLE)
+    
 
     pygame.display.set_caption("My Game")
-    pygame.mouse.set_visible(False)
+    pygame.mouse.set_visible(True)
 
     # Create our objects and set the data
     done = False
