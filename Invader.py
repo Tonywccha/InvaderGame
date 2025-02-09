@@ -11,6 +11,9 @@ RED = (255, 0, 0)
 SCREEN_WIDTH = 1440
 SCREEN_HEIGHT = 780
 
+HEART_POSITION_X = 10
+HEART_POSITION_Y = 10
+NUMBER_OF_HEART = 5
 
 NUMBER_OF_BLOCKS_COL = 11
 NUMBER_OF_BLOCKS_ROW = 5
@@ -133,6 +136,14 @@ class InvaderBullet(Bullet):
     def update(self):
         self.rect.y += 3
 
+class Heart(pygame.sprite.Sprite):
+    """ This class represents the life left . """
+
+    def __init__(self):
+        # Call the parent class (Sprite) constructor
+        super().__init__()
+        self.image = pygame.image.load("heart.png")
+        self.rect = self.image.get_rect()
 
 
 class Game(object):
@@ -147,6 +158,7 @@ class Game(object):
         self.score = 0
         self.game_over = False
         self.game_over_msg ='Game Over!'
+        self.life=NUMBER_OF_HEART
         global VX, VXX
         VXX = False
         VX = 1
@@ -157,6 +169,16 @@ class Game(object):
         self.bullet_list = pygame.sprite.Group()
         self.invaderbullet_list = pygame.sprite.Group()
         self.all_sprites_list = pygame.sprite.Group()
+        self.heart_list=[]
+
+        for i in range(self.life):
+            heart=Heart()
+            heart.rect.x = HEART_POSITION_X + i * heart.rect.w + 10
+            heart.rect.y = HEART_POSITION_Y
+            self.heart_list.append(heart)
+            self.all_sprites_list.add(heart)
+
+
 
         # Create the block sprites`
         for col in range(NUMBER_OF_BLOCKS_COL):
@@ -273,9 +295,13 @@ class Game(object):
                         self.invaderbullet_list.remove(invaderbullet)
                         self.all_sprites_list.remove(invaderbullet)
 
-                invaderbullet_hit_list = pygame.sprite.spritecollide(self.player, self.invaderbullet_list, False)
+                invaderbullet_hit_list = pygame.sprite.spritecollide(self.player, self.invaderbullet_list, True)
                 if len(invaderbullet_hit_list) > 0:
-                    self.game_over = True
+                    self.life -= 1
+                    self.all_sprites_list.remove(self.heart_list[self.life])
+                    #self.heart_list.remove(self.life)
+                    if self.life ==0:
+                        self.game_over = True
 
 
 
