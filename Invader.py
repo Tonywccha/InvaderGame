@@ -1,5 +1,6 @@
 import pygame
 import random
+import time
 
 # --- Global constants ---
 BLACK = (0, 0, 0)
@@ -7,12 +8,15 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 500
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 700
 
 NUMBER_OF_BLOCKS_COL = 11
 NUMBER_OF_BLOCKS_ROW = 5
 SPACE_BETWEEN_BLOCKS = 15
+
+INVADERBULLETCHANCE = 5
+HIT_DELAY=0.1
 
 global VX
 global VXX
@@ -28,17 +32,47 @@ class Block(pygame.sprite.Sprite):
     def __init__(self):
         """ Constructor, create the image of the block. """
         super().__init__()
-        self.image = pygame.Surface([20, 20])
-        self.image.fill(WHITE)
+        #self.image = pygame.Surface([20, 20])
+        #self.image.fill(WHITE)
+        #self.rect = self.image.get_rect()
+        self.image1 = pygame.image.load("goose1-45px.png")
+        self.image2 = pygame.image.load("goose2-45px.png")
+        self.image3 = pygame.image.load("goose3-45px.png")
+        self.imagehit = pygame.image.load("explode.png")
+        
+        self.image=self.image1
+        self.imageindex=1
+        self.imagedirection='R'
         self.rect = self.image.get_rect()
 
+    def hit(self):
+        self.image=self.imagehit
+        
+    def swapimage(self):
+        if self.imageindex==1:
+            self.image=self.image2
+            self.imageindex=2
+        elif self.imageindex==2:
+            self.image=self.image3
+            self.imageindex=3
+        else:
+            self.image=self.image1
+            self.imageindex=1
+
+    def flipimage(self):
+        if self.imagedirection=='R':
+            self.imagedirection='L'
+        else:
+            self.imagedirection='R'
+        self.image1=pygame.transform.flip(self.image1,True,False)
+        self.image2=pygame.transform.flip(self.image2,True,False)
+        self.image3=pygame.transform.flip(self.image3,True,False)
+        
 
     def update(self):
         """ Automatically called when we need to move the block. """
         global VX
         global VXX
-
-
 
         if self.rect.x+VX >= SCREEN_WIDTH - self.rect.w:
             VXX = True
@@ -49,16 +83,22 @@ class Block(pygame.sprite.Sprite):
             #self.rect.x += VX
         #else:
         self.rect.x += VX
+        
+        if self.rect.x % 7 == 3:
+            self.swapimage()
+
+
 
 class Player(pygame.sprite.Sprite):
     """ This class represents the player. """
 
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface([20, 20])
-        self.image.fill(GREEN)
+        #self.image = pygame.Surface([20, 20])
+        #self.image.fill(GREEN)
+        self.image = pygame.image.load("hunter.png")
         self.rect = self.image.get_rect()
-        self.rect.y = 480
+        self.rect.y = SCREEN_HEIGHT-self.rect.h
 
     def update(self):
         """ Update the player location. """
@@ -72,10 +112,9 @@ class Bullet(pygame.sprite.Sprite):
     def __init__(self):
         # Call the parent class (Sprite) constructor
         super().__init__()
-
-        self.image = pygame.Surface([4, 10])
-        self.image.fill(GREEN)
-
+        #self.image = pygame.Surface([4, 10])
+        #self.image.fill(GREEN)
+        self.image = pygame.image.load("greenbolt.png")
         self.rect = self.image.get_rect()
 
     def update(self):
@@ -86,7 +125,10 @@ class InvaderBullet(Bullet):
     """ This class represents the bullets from the invaders and it is a sub-class of Bullet"""
     def __init__(self):
         super().__init__()
-        self.image.fill(RED)
+        #self.image.fill(RED)
+        self.image = pygame.image.load("pooemoji.png")
+        self.rect = self.image.get_rect()
+
     def update(self):
         self.rect.y += 3
 
@@ -104,9 +146,13 @@ class Game(object):
         self.score = 0
         self.game_over = False
         self.game_over_msg ='Game Over!'
+        global VX, VXX
+        VXX = False
+        VX = 1
 
         # Create sprite lists
         self.block_list = pygame.sprite.Group()
+        self.block_hit_group = pygame.sprite.Group()
         self.bullet_list = pygame.sprite.Group()
         self.invaderbullet_list = pygame.sprite.Group()
         self.all_sprites_list = pygame.sprite.Group()
@@ -141,15 +187,15 @@ class Game(object):
                     # Fire a bullet if the user clicks the mouse button
                     bullet = Bullet()
                     # Set the bullet so it is where the player is
-                    bullet.rect.x = self.player.rect.x
-                    bullet.rect.y = self.player.rect.y
+                    bullet.rect.centerx=self.player.rect.centerx
+                    bullet.rect.y = self.player.rect.y-bullet.rect.h
                     # Add the bullet to the lists
                     self.all_sprites_list.add(bullet)
                     self.bullet_list.add(bullet)
 
         return False
 
-    def run_logic(self):
+    def run_logic(self,screen):
         """
         This method is run each time through the frame. It
         updates positions and checks for collisions.
@@ -162,6 +208,8 @@ class Game(object):
             if VXX == True:
                 VX *= -1
                 VXX = False
+                for block in self.block_list:
+                    block.flipimage()
 
             # See if the player block has collided with anything.
             # blocks_hit_list = pygame.sprite.spritecollide(self.player, self.block_list, True)
@@ -171,11 +219,21 @@ class Game(object):
                 block_hit_list = pygame.sprite.spritecollide(bullet, self.block_list, True)
 
                 # For each block hit, remove the bullet and add to the score
-                for block in block_hit_list:
-                    self.bullet_list.remove(bullet)
-                    self.all_sprites_list.remove(bullet)
-                    self.score += 1
-                    print(self.score)
+                if len(block_hit_list)>0:
+                    for block in block_hit_list:
+                        block.hit()
+                        self.block_hit_group.add(block)
+                    self.block_hit_group.draw(screen)
+                    pygame.display.flip()
+                    time.sleep(HIT_DELAY)
+                
+
+                    for block in block_hit_list:
+                        self.block_hit_group.remove(block)
+                        self.bullet_list.remove(bullet)
+                        self.all_sprites_list.remove(bullet)
+                        self.score += 1
+                        print(self.score)
 
                 # Remove the bullet if it flies up off the screen
                 if bullet.rect.y < -10:
@@ -186,8 +244,8 @@ class Game(object):
                 self.game_over = True
                 self.game_over_msg = 'Wow! You won!'
             else:
-                #One random invader shoots a bullet if a random number > 7
-                if random.randrange(100)>50:
+                #One random invader shoots a bullet if a random number > INVADERBULLETCHANCE
+                if random.randrange(100)>(100-INVADERBULLETCHANCE):
                     invaderbullet=InvaderBullet()
                     randomblockindex = random.randrange(0, len(self.block_list))
                     randomblock:Block=None
@@ -197,7 +255,7 @@ class Game(object):
                         if i > randomblockindex:
                             randomblock=block
                             break
-                    invaderbullet.rect.x=randomblock.rect.x+int(randomblock.rect.w/2)
+                    invaderbullet.rect.centerx=randomblock.rect.centerx
                     invaderbullet.rect.y=randomblock.rect.y+randomblock.rect.h
                     self.all_sprites_list.add(invaderbullet)
                     self.invaderbullet_list.add(invaderbullet)
@@ -262,7 +320,7 @@ def main():
         done = game.process_events()
 
         # Update object positions, check for collisions
-        game.run_logic()
+        game.run_logic(screen)
 
         # Draw the current frame
         game.display_frame(screen)
