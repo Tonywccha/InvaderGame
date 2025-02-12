@@ -1,6 +1,9 @@
-import pygame
+'''A classic invader shooting game'''
+
+
 import random
 import time
+import pygame
 
 # --- Global constants ---
 BLACK = (0, 0, 0)
@@ -43,16 +46,17 @@ class Block(pygame.sprite.Sprite):
         self.image2 = pygame.image.load("goose2-45px.png")
         self.image3 = pygame.image.load("goose3-45px.png")
         self.imagehit = pygame.image.load("explode.png")
-        
         self.image=self.image1
         self.imageindex=1
         self.imagedirection='R'
         self.rect = self.image.get_rect()
 
     def hit(self):
+        '''change the sprite image to an explode image'''
         self.image=self.imagehit
-        
+
     def swapimage(self):
+        '''animated sprite image'''
         if self.imageindex==1:
             self.image=self.image2
             self.imageindex=2
@@ -64,6 +68,7 @@ class Block(pygame.sprite.Sprite):
             self.imageindex=1
 
     def flipimage(self):
+        '''flip sprite image to keep the face consistent to moving direction'''
         if self.imagedirection=='R':
             self.imagedirection='L'
         else:
@@ -71,13 +76,12 @@ class Block(pygame.sprite.Sprite):
         self.image1=pygame.transform.flip(self.image1,True,False)
         self.image2=pygame.transform.flip(self.image2,True,False)
         self.image3=pygame.transform.flip(self.image3,True,False)
-        
+
 
     def update(self):
         """ Automatically called when we need to move the block. """
         global VX
         global VXX
-
         if self.rect.x+VX >= SCREEN_WIDTH - self.rect.w:
             VXX = True
             #self.rect.x += VX
@@ -87,7 +91,6 @@ class Block(pygame.sprite.Sprite):
             #self.rect.x += VX
         #else:
         self.rect.x += VX
-        
         if self.rect.x % 7 == 3:
             self.swapimage()
 
@@ -249,7 +252,7 @@ class Game(object):
                     self.block_hit_group.draw(screen)
                     pygame.display.flip()
                     time.sleep(HIT_DELAY)
-                
+
 
                     for block in block_hit_list:
                         self.block_hit_group.remove(block)
@@ -283,11 +286,11 @@ class Game(object):
                     self.all_sprites_list.add(invaderbullet)
                     self.invaderbullet_list.add(invaderbullet)
 
-                
+
                 for invaderbullet in self.invaderbullet_list:
                     #Checks if any invader bullets hit the player
                     #block_hit_list = pygame.sprite.spritecollide(bullet, self.block_list, True)
-                    
+
                     #if hit the player, gameover
 
                     #Remove the invader bullet if it flies down off the screen
@@ -330,7 +333,7 @@ def main():
 
     size = [SCREEN_WIDTH, SCREEN_HEIGHT]
     screen = pygame.display.set_mode(size, pygame.RESIZABLE)
-    
+
 
     pygame.display.set_caption("My Game")
     pygame.mouse.set_visible(True)
